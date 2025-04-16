@@ -45,11 +45,11 @@ packages:
     dependency: "direct main"
     description:
       path: "flutter/flutter"
-      ref: "flutter_fix_retired_v6.0.3"
-      resolved-ref: ff41066ee575d6eb9749ff943a03d845e51ca39a
+      ref: "flutter_fix_retired_v5.1.0"
+      resolved-ref: aa6f4423f2de93e4e06cf8a5431771ed2b9ce0d5
       url: "https://github.com/Sahad2701/ffmpeg-kit.git"
     source: git
-    version: "6.0.3"
+    version: "5.1.0"
   ffmpeg_kit_flutter_platform_interface:
     dependency: transitive
     description:
