@@ -14,7 +14,7 @@ dependencies:
   video_player: ^2.9.2
   ffmpeg_kit_flutter_new: ^3.2.0
   path_provider: ^2.1.1
-  intl: ^0.19.0
+  intl: ^20.2.0
   path: ^1.9.0
   transparent_image: ^2.0.1
 
