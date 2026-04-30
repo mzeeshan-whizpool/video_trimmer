@@ -65,14 +65,23 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.1.5"
+  ffmpeg_kit_flutter_android:
+    dependency: transitive
+    description:
+      name: ffmpeg_kit_flutter_android
+      sha256: "6fe3ece6a8c16b04f695dab9f58b39fc35e617fce8221d4183dd027e59f71c01"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.7.0"
   ffmpeg_kit_flutter_new:
     dependency: "direct main"
     description:
-      name: ffmpeg_kit_flutter_new
-      sha256: a6f881b2a41c8900733afef1806e069f58ab48e395174552e98157eb10d8adc0
-      url: "https://pub.dev"
-    source: hosted
-    version: "3.2.0"
+      path: "."
+      ref: arm64-simulator-support
+      resolved-ref: "92ca2c3c53a29c52d9a61b3183a8eae5d039f587"
+      url: "https://github.com/mzeeshan-whizpool/ffmpeg_kit_flutter.git"
+    source: git
+    version: "2.0.0"
   ffmpeg_kit_flutter_platform_interface:
     dependency: transitive
     description:

@@ -12,7 +12,10 @@ dependencies:
     sdk: flutter
 
   video_player: ^2.9.2
-  ffmpeg_kit_flutter_new: ^3.2.0
+  ffmpeg_kit_flutter_new:
+    git:
+      url: https://github.com/mzeeshan-whizpool/ffmpeg_kit_flutter.git
+      ref: arm64-simulator-support
   path_provider: ^2.1.1
   intl: ^0.20.0
   path: ^1.9.0
