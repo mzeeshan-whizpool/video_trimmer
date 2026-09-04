@@ -360,6 +360,9 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
         final trimmerCover = trimmerFraction * trimAreaLength;
         maxLengthPixels = trimmerCover;
         _endPos = Offset(trimmerCover, thumbnailHeight);
+        // Keep the end fraction consistent with the initial frame so the
+        // auto-scroll math does not assume the frame spans the whole area.
+        _endFraction = trimmerFraction;
         log('START: $_startPos, END: $_endPos');
 
         _videoEndPos =
@@ -467,7 +470,11 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
   /// [_onDragStart].
   /// Makes sure the limits are respected.
   void _onDragUpdate(DragUpdateDetails details) {
-    if (!_allowDrag) return;
+    if (!_allowDrag) {
+      // Dragging outside the frame pans the thumbnail strip instead.
+      _scrollThumbnailsBy(-details.delta.dx);
+      return;
+    }
 
     // log('Local pos: ${details.localPosition}');
     _localPosition = details.localPosition.dx;
@@ -510,6 +517,31 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
       startTimer(false);
     }
 
+    setState(() {});
+  }
+
+  /// Pans the thumbnail strip by [deltaPixels] and keeps the selected range
+  /// in sync with the new scroll offset. Used when the user drags outside the
+  /// trim frame, since the strip itself ignores pointer events.
+  void _scrollThumbnailsBy(double deltaPixels) {
+    if (!_scrollController.hasClients) return;
+    final position = _scrollController.position;
+    if (position.maxScrollExtent <= 0) return;
+
+    currentScrollValue =
+        (position.pixels + deltaPixels).clamp(0.0, position.maxScrollExtent);
+    _scrollController.jumpTo(currentScrollValue);
+
+    final durationChange =
+        (currentScrollValue / position.maxScrollExtent) * _remainingDuration;
+    _videoStartPos =
+        (_trimmerAreaDuration * (_startPos.dx / _thumbnailViewerW)) +
+            durationChange;
+    _videoEndPos =
+        (_trimmerAreaDuration * (_endPos.dx / _thumbnailViewerW)) +
+            durationChange;
+    widget.onChangeStart!(_videoStartPos);
+    widget.onChangeEnd!(_videoEndPos);
     setState(() {});
   }
 
