@@ -490,12 +490,20 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
     } else if (_dragType == EditorDragType.center) {
       _startCircleSize = widget.editorProperties.circleSizeOnDrag;
       _endCircleSize = widget.editorProperties.circleSizeOnDrag;
-      if ((_startPos.dx + details.delta.dx >= 0) &&
-          (_endPos.dx + details.delta.dx <= _thumbnailViewerW)) {
-        _startPos += details.delta;
-        _endPos += details.delta;
+      // Move the frame as far as the area allows; whatever is left over pans
+      // the strip so the selection keeps following the finger at the edges.
+      final maxLeft = -_startPos.dx;
+      final maxRight = _thumbnailViewerW - _endPos.dx;
+      final frameDelta = details.delta.dx.clamp(maxLeft, maxRight);
+      if (frameDelta != 0) {
+        _startPos += Offset(frameDelta, 0);
+        _endPos += Offset(frameDelta, 0);
         _onStartDragged();
         _onEndDragged();
+      }
+      final overflow = details.delta.dx - frameDelta;
+      if (overflow != 0) {
+        _scrollThumbnailsBy(overflow);
       }
     } else {
       _endCircleSize = widget.editorProperties.circleSizeOnDrag;
@@ -525,12 +533,31 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
   /// trim frame, since the strip itself ignores pointer events.
   void _scrollThumbnailsBy(double deltaPixels) {
     if (!_scrollController.hasClients) return;
+    _scrollThumbnailsTo(_scrollController.position.pixels + deltaPixels);
+  }
+
+  /// Scrolls the thumbnail strip to [targetPixels] (clamped to the scroll
+  /// extent) and keeps the selected range in sync with the new offset.
+  void _scrollThumbnailsTo(double targetPixels, {bool animate = false}) {
+    if (!_scrollController.hasClients) return;
     final position = _scrollController.position;
     if (position.maxScrollExtent <= 0) return;
 
-    currentScrollValue =
-        (position.pixels + deltaPixels).clamp(0.0, position.maxScrollExtent);
-    _scrollController.jumpTo(currentScrollValue);
+    currentScrollValue = targetPixels.clamp(0.0, position.maxScrollExtent);
+    if (animate) {
+      _scrollController
+          .animateTo(
+            currentScrollValue,
+            duration: const Duration(milliseconds: 200),
+            curve: Curves.easeOut,
+          )
+          .then((_) {
+        // Refresh the edge arrows once the strip has settled.
+        if (mounted) setState(() {});
+      });
+    } else {
+      _scrollController.jumpTo(currentScrollValue);
+    }
 
     final durationChange =
         (currentScrollValue / position.maxScrollExtent) * _remainingDuration;
@@ -705,22 +732,41 @@ class _ScrollableTrimViewerState extends State<ScrollableTrimViewer>
                             width: widget.viewerWidth,
                             child: Row(
                               children: [
-                                AnimatedOpacity(
-                                    opacity:
-                                        _scrollController.position.pixels != 0.0
-                                            ? 1.0
-                                            : 0.0,
-                                    duration: const Duration(milliseconds: 300),
-                                    child: widget.areaProperties.startIcon),
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _scrollThumbnailsTo(
+                                    _scrollController.position.pixels -
+                                        _thumbnailViewerW / 2,
+                                    animate: true,
+                                  ),
+                                  child: AnimatedOpacity(
+                                      opacity: _scrollController
+                                                  .position.pixels !=
+                                              0.0
+                                          ? 1.0
+                                          : 0.0,
+                                      duration:
+                                          const Duration(milliseconds: 300),
+                                      child: widget.areaProperties.startIcon),
+                                ),
                                 const Spacer(),
-                                AnimatedOpacity(
-                                  opacity: _scrollController.position.pixels !=
-                                          _scrollController
-                                              .position.maxScrollExtent
-                                      ? 1.0
-                                      : 0.0,
-                                  duration: const Duration(milliseconds: 300),
-                                  child: widget.areaProperties.endIcon,
+                                GestureDetector(
+                                  behavior: HitTestBehavior.opaque,
+                                  onTap: () => _scrollThumbnailsTo(
+                                    _scrollController.position.pixels +
+                                        _thumbnailViewerW / 2,
+                                    animate: true,
+                                  ),
+                                  child: AnimatedOpacity(
+                                    opacity: _scrollController
+                                                .position.pixels !=
+                                            _scrollController
+                                                .position.maxScrollExtent
+                                        ? 1.0
+                                        : 0.0,
+                                    duration: const Duration(milliseconds: 300),
+                                    child: widget.areaProperties.endIcon,
+                                  ),
                                 ),
                               ],
                             ),
